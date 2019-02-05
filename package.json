@@ -1,0 +1,8 @@
+{
+  "name": "exoframe-plugin-swarm",
+  "version": "0.1.0",
+  "description": "Exoframe plugin that adds Docker Swarm support",
+  "main": "index.js",
+  "author": "Tim Ermilov <yamalight@gmail.com>",
+  "license": "MIT"
+}
