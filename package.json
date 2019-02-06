@@ -1,14 +1,16 @@
 {
   "name": "exoframe-plugin-swarm",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Exoframe plugin that adds Docker Swarm support",
   "main": "index.js",
   "author": "Tim Ermilov <yamalight@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "test": "NODE_ENV=testing jest --runInBand --ci --coverage"
+    "test": "NODE_ENV=testing jest --runInBand --coverage --silent --ci",
+    "coveralls": "cat ./coverage/lcov.info | coveralls"
   },
   "devDependencies": {
+    "coveralls": "^3.0.2",
     "dockerode": "^2.5.8",
     "exoframe-server": "^3.7.0-dev",
     "jest": "^24.1.0",

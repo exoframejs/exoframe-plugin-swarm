@@ -17,6 +17,8 @@ const docker = new Docker(); // defaults to above if env variables are not used
 
 // promisifies rimraf
 const rimrafAsync = p => new Promise(r => rimraf(p, r));
+// util sleep function
+const sleep = t => new Promise(r => setTimeout(r, t));
 
 // create tar streams
 const streamDocker = tar.pack(path.join(__dirname, 'fixtures', 'docker-project'));
@@ -32,12 +34,21 @@ const streamAdditionalLabels = tar.pack(path.join(__dirname, 'fixtures', 'additi
 const streamTemplate = tar.pack(path.join(__dirname, 'fixtures', 'template-project'));
 
 // options base
-const optionsBase = {
+const postOptionsBase = {
   method: 'POST',
   url: '/deploy',
   headers: {
     Authorization: `Bearer ${authToken}`,
     'Content-Type': 'application/octet-stream',
+  },
+};
+
+// options base
+const getOptionsBase = {
+  method: 'GET',
+  url: '/list',
+  headers: {
+    Authorization: `Bearer ${authToken}`,
   },
 };
 
@@ -49,6 +60,8 @@ let fastify;
 let simpleHtmlInitialDeploy = '';
 let composeDeployOne = '';
 let composeDeployTwo = '';
+let htmlServiceInfo = {};
+let nodeServiceInfo = {};
 
 // set timeout to 60s
 jest.setTimeout(60000);
@@ -71,7 +84,7 @@ afterAll(async done => {
 });
 
 test('Should deploy simple docker project to swarm', async done => {
-  const options = Object.assign(optionsBase, {
+  const options = Object.assign(postOptionsBase, {
     payload: streamDocker,
   });
 
@@ -116,7 +129,7 @@ test('Should deploy simple docker project to swarm', async done => {
 });
 
 test('Should deploy simple node project to swarm', async done => {
-  const options = Object.assign(optionsBase, {
+  const options = Object.assign(postOptionsBase, {
     payload: streamNode,
   });
 
@@ -157,14 +170,85 @@ test('Should deploy simple node project to swarm', async done => {
   expect(serviceInfo.Spec.Networks.length).toEqual(1);
 
   // cleanup
-  const instance = docker.getService(serviceInfo.ID);
-  await instance.remove();
+  nodeServiceInfo = serviceInfo;
+
+  // wait for service to start
+  while (true) {
+    await sleep(1000);
+    const containers = await docker.listContainers();
+    const deployed = containers.find(c => c.Labels['com.docker.swarm.service.id'] === serviceInfo.ID);
+    if (deployed) {
+      break;
+    }
+  }
 
   done();
 });
 
+test('Should get logs for current deployment from swarm', async done => {
+  const serviceName = nodeServiceInfo.Spec.Labels['exoframe.deployment'];
+  const options = Object.assign({}, getOptionsBase, {
+    url: `/logs/${serviceName}`,
+  });
+
+  const response = await fastify.inject(options);
+  // console.log(response);
+  // check response
+  expect(response.statusCode).toEqual(200);
+  // check logs
+  const lines = response.payload
+    // split by lines
+    .split('\n')
+    // remove unicode chars
+    .map(line => line.replace(/^\u0001.+?\d/, '').replace(/\n+$/, ''))
+    // filter blank lines
+    .filter(line => line && line.length > 0)
+    // remove timestamps
+    .map(line => {
+      const parts = line.split(/\dZ\s/);
+      return parts[1].replace(/\sv\d.+/, ''); // strip any versions
+    });
+  expect(lines).toMatchSnapshot();
+
+  done();
+});
+
+test('Should remove current deployment from swarm', async done => {
+  const serviceName = nodeServiceInfo.Spec.Labels['exoframe.deployment'];
+  const options = Object.assign({}, postOptionsBase, {
+    url: `/remove/${serviceName}`,
+    payload: {},
+  });
+
+  const response = await fastify.inject(options);
+  // check response
+  expect(response.statusCode).toEqual(204);
+
+  // check docker services
+  const allServices = await docker.listServices();
+  const exService = allServices.find(c => c.Spec.Name === serviceName);
+  expect(exService).toBeUndefined();
+
+  done();
+});
+
+test('Should return error when removing nonexistent project from swarm', async done => {
+  // options base
+  const options = Object.assign({}, postOptionsBase, {
+    url: `/remove/do-not-exist`,
+    payload: {},
+  });
+
+  const response = await fastify.inject(options);
+  const result = JSON.parse(response.payload);
+  // check response
+  expect(response.statusCode).toEqual(404);
+  expect(result).toMatchObject({error: 'Service not found!'});
+  done();
+});
+
 test('Should deploy simple HTML project to swarm', async done => {
-  const options = Object.assign(optionsBase, {
+  const options = Object.assign(postOptionsBase, {
     payload: streamHtml,
   });
 
@@ -201,12 +285,34 @@ test('Should deploy simple HTML project to swarm', async done => {
 
   // store initial deploy id
   simpleHtmlInitialDeploy = serviceInfo.ID;
+  htmlServiceInfo = serviceInfo.Spec;
+
+  done();
+});
+
+test('Should list deployed projects in swarm', async done => {
+  const response = await fastify.inject(getOptionsBase);
+  const result = JSON.parse(response.payload);
+
+  // check response
+  expect(response.statusCode).toEqual(200);
+  expect(result.services).toBeDefined();
+  expect(result.containers).toBeDefined();
+  expect(result.services.length).toEqual(1);
+
+  // check container info
+  const service = result.services.find(c => c.Spec.Name === htmlServiceInfo.Name);
+  expect(service).toBeDefined();
+  expect(service.Spec.Labels['exoframe.deployment']).toEqual(htmlServiceInfo.Labels['exoframe.deployment']);
+  expect(service.Spec.Labels['exoframe.user']).toEqual(htmlServiceInfo.Labels['exoframe.user']);
+  expect(service.Spec.Labels['traefik.backend']).toEqual(htmlServiceInfo.Labels['traefik.backend']);
+  expect(service.Spec.Labels['traefik.frontend.rule']).toEqual(htmlServiceInfo.Labels['traefik.frontend.rule']);
 
   done();
 });
 
 test('Should update simple HTML project in swarm', async done => {
-  const options = Object.assign(optionsBase, {
+  const options = Object.assign(postOptionsBase, {
     url: '/update',
     payload: streamHtmlUpdate,
   });
@@ -248,7 +354,7 @@ test('Should update simple HTML project in swarm', async done => {
 });
 
 test('Should deploy simple compose project to swarm', async done => {
-  const options = Object.assign(optionsBase, {
+  const options = Object.assign(postOptionsBase, {
     payload: streamCompose,
   });
 
@@ -303,7 +409,7 @@ test('Should deploy simple compose project to swarm', async done => {
 });
 
 test('Should update simple compose project in swarm', async done => {
-  const options = Object.assign(optionsBase, {
+  const options = Object.assign(postOptionsBase, {
     url: '/update',
     payload: streamComposeUpdate,
   });
@@ -355,17 +461,83 @@ test('Should update simple compose project in swarm', async done => {
   expect(serviceOne.ID).not.toEqual(composeDeployOne);
   expect(serviceTwo.ID).not.toEqual(composeDeployTwo);
 
-  // cleanup
-  const instanceOne = docker.getService(serviceOne.ID);
-  await instanceOne.remove();
-  const instanceTwo = docker.getService(serviceTwo.ID);
-  await instanceTwo.remove();
+  done();
+});
+
+test('Should get logs for current project from swarm', async done => {
+  const projectName = 'exo-admin-test-compose-swarm-deploy';
+  // options base
+  const options = Object.assign({}, getOptionsBase, {
+    url: `/logs/${projectName}`,
+  });
+
+  const response = await fastify.inject(options);
+  // check response
+  expect(response.statusCode).toEqual(200);
+
+  // check logs
+  const text = response.payload
+    // split by lines
+    .split('\n')
+    // remove unicode chars
+    .map(line => line.replace(/^\u0001.+?\d/, '').replace(/\n+$/, ''))
+    // filter blank lines
+    .filter(line => line && line.length > 0)
+    // remove timestamps
+    .map(line => {
+      if (line.startsWith('Logs for')) {
+        return line;
+      }
+      const parts = line.split(/\dZ\s/);
+      return parts[1].replace(/\sv\d.+/, ''); // strip any versions
+    });
+  expect(text).toEqual(
+    expect.arrayContaining([
+      'Logs for exo-admin-test-compose-swarm-deploy_redis',
+      'Logs for exo-admin-test-compose-swarm-deploy_web',
+    ])
+  );
+
+  done();
+});
+
+test('Should not get logs for nonexistent project', async done => {
+  // options base
+  const options = Object.assign({}, getOptionsBase, {
+    url: `/logs/do-not-exist`,
+  });
+
+  const response = await fastify.inject(options);
+  const result = JSON.parse(response.payload);
+  // check response
+  expect(response.statusCode).toEqual(404);
+  expect(result).toMatchObject({error: 'Service not found!'});
+  done();
+});
+
+test('Should remove current project from swarm', async done => {
+  // compose project
+  const projectName = 'exo-admin-test-compose-swarm-deploy';
+  // options base
+  const options = Object.assign({}, postOptionsBase, {
+    url: `/remove/${projectName}`,
+    payload: {},
+  });
+
+  const response = await fastify.inject(options);
+  // check response
+  expect(response.statusCode).toEqual(204);
+
+  // check docker services
+  const allServices = await docker.listServices();
+  const prjServices = allServices.filter(c => c.Spec.Labels['exoframe.project'] === projectName);
+  expect(prjServices.length).toEqual(0);
 
   done();
 });
 
 test('Should display error log for broken docker project in swarm', async done => {
-  const options = Object.assign(optionsBase, {
+  const options = Object.assign(postOptionsBase, {
     payload: streamBrokenDocker,
   });
 
@@ -390,7 +562,7 @@ test('Should display error log for broken docker project in swarm', async done =
 });
 
 test('Should display error log for broken Node.js project in swarm', async done => {
-  const options = Object.assign(optionsBase, {
+  const options = Object.assign(postOptionsBase, {
     payload: streamBrokenNode,
   });
 
@@ -417,7 +589,7 @@ test('Should display error log for broken Node.js project in swarm', async done 
 });
 
 test('Should display error log for compose v2 project in swarm', async done => {
-  const options = Object.assign(optionsBase, {
+  const options = Object.assign(postOptionsBase, {
     payload: streamBrokenCompose,
   });
 
@@ -439,7 +611,7 @@ test('Should display error log for compose v2 project in swarm', async done => {
 });
 
 test('Should have additional labels in swarm', async done => {
-  const options = Object.assign(optionsBase, {
+  const options = Object.assign(postOptionsBase, {
     payload: streamAdditionalLabels,
   });
 
@@ -470,7 +642,7 @@ test('Should have additional labels in swarm', async done => {
 });
 
 test('Should deploy project with configured template to swarm', async done => {
-  const options = Object.assign(optionsBase, {
+  const options = Object.assign(postOptionsBase, {
     payload: streamTemplate,
   });
 

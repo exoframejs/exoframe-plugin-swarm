@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Should get logs for current deployment from swarm 1`] = `
+Array [
+  "",
+  "> node-project@1.0.0 start /usr/src/app",
+  "> node index.js",
+  "",
+  "Listening on port 80",
+]
+`;
