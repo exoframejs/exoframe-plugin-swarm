@@ -11,7 +11,7 @@ const selfPath = path.resolve(__dirname, '../../');
 
 // mock implementation
 child_process.spawn = (...args) => {
-  if (args[0] === 'yarn') {
+  if (args[0] === 'yarn' && args[1].includes('add')) {
     // rewrite install path to install self
     args[1].pop();
     args[1][1] = selfPath;

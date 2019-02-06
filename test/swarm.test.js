@@ -174,10 +174,13 @@ test('Should deploy simple node project to swarm', async done => {
 
   // wait for service to start
   while (true) {
-    await sleep(1000);
+    await sleep(2000);
     const containers = await docker.listContainers();
     const deployed = containers.find(c => c.Labels['com.docker.swarm.service.id'] === serviceInfo.ID);
     if (deployed) {
+      // once container is available - sleep for a couple more seconds
+      // to let the node inside start
+      await sleep(2000);
       break;
     }
   }

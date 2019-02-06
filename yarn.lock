@@ -915,10 +915,13 @@ exit@^0.1.2:
   resolved "https://registry.yarnpkg.com/exit/-/exit-0.1.2.tgz#0632638f8d877cc82107d30a0fff1a17cba1cd0c"
   integrity sha1-BjJjj42HfMghB9MKD/8aF8uhzQw=
 
-exoframe-server@^3.7.0-dev:
-  version "3.7.0-dev"
-  resolved "https://registry.yarnpkg.com/exoframe-server/-/exoframe-server-3.7.0-dev.tgz#429f92687bb9c3700d80641e2b89838d79410e2b"
-  integrity sha512-Uxot608P13yuSwLym/KsemjvD/MJMERAWGlsIrNqX/HP+1zS0xU635SP0YtNNjIpKSWAxIj6FrdF8mlxgv11kw==
+exoframe-plugin-swarm@/Users/yamalight/Projects/exoframe/exoframe-plugin-swarm:
+  version "1.0.0"
+
+exoframe-server@^3.8.0-dev:
+  version "3.8.0-dev"
+  resolved "https://registry.yarnpkg.com/exoframe-server/-/exoframe-server-3.8.0-dev.tgz#1fb47449826d92ca920c3eb6c09ef49b86a691a1"
+  integrity sha512-+KJ5oN8YqlqpsD6U3pC44zflStiT23d3VS45S1TcZuam4DG1RmELOX4ywNxElgWAbNeOFCbg9+C0Kqg/MYyprw==
 
 expand-brackets@^2.1.4:
   version "2.1.4"
