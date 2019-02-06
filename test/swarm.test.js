@@ -7,6 +7,7 @@ const path = require('path');
 const tar = require('tar-fs');
 const rimraf = require('rimraf');
 const Docker = require('dockerode');
+const getPort = require('get-port');
 
 // our packages
 const authToken = require('./fixtures/authToken');
@@ -70,7 +71,8 @@ beforeAll(async done => {
   // remove any installed plugins
   await rimrafAsync(path.join(__dirname, 'fixtures', 'config', 'plugins', 'node_modules'));
   // start new instance of fastify
-  fastify = await start();
+  const port = await getPort();
+  fastify = await start(port);
 
   done();
 });
