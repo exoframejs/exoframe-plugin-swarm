@@ -52,7 +52,12 @@ const updateComposeForStack = ({composePath, baseName, serverConfig, images, yam
     if (!compose.services[svcKey].deploy) {
       compose.services[svcKey].deploy = {};
     }
-    compose.services[svcKey].deploy.labels = Object.assign({}, compose.services[svcKey].labels, extLabels);
+    compose.services[svcKey].deploy.labels = Object.assign(
+      {},
+      compose.services[svcKey].deploy.labels,
+      compose.services[svcKey].labels,
+      extLabels
+    );
     delete compose.services[svcKey].labels;
   });
 
@@ -105,7 +110,7 @@ module.exports = async ({
       level: 'error',
     });
     resultStream.end('');
-    return false;
+    return true;
   }
 
   // update docker-compose to include pre-built images

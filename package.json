@@ -4,5 +4,15 @@
   "description": "Exoframe plugin that adds Docker Swarm support",
   "main": "index.js",
   "author": "Tim Ermilov <yamalight@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "scripts": {
+    "test": "NODE_ENV=testing jest --runInBand --ci --coverage"
+  },
+  "devDependencies": {
+    "dockerode": "^2.5.8",
+    "exoframe-server": "^3.7.0-dev",
+    "jest": "^24.1.0",
+    "rimraf": "^2.6.3",
+    "tar-fs": "^2.0.0"
+  }
 }

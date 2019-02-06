@@ -1,0 +1,7 @@
+node_modules
+test/fixtures/config/deploying
+test/fixtures/config/extensions
+test/fixtures/config/plugins
+test/fixtures/config/recipes
+test/fixtures/config/traefik
+coverage

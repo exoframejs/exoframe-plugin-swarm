@@ -33,7 +33,7 @@ exports.startFromParams = async ({
   const {network: userNetwork} = serverConfig.plugins.swarm;
   const network = userNetwork || 'exoframe-swarm';
   const swarmLabels = {'traefik.port': '80', 'traefik.docker.network': network};
-  const Labels = Object.assign(swarmLabels, serviceLabels);
+  const Labels = Object.assign({}, serviceLabels, swarmLabels);
 
   // create service config
   const serviceConfig = {
@@ -110,7 +110,7 @@ exports.start = async ({
   const {network: userNetwork} = serverConfig.plugins.swarm;
   const network = userNetwork || 'exoframe-swarm';
   const swarmLabels = {'traefik.port': '80', 'traefik.docker.network': network};
-  const Labels = Object.assign(swarmLabels, serviceLabels);
+  const Labels = Object.assign({}, serviceLabels, swarmLabels);
 
   // create service config
   const serviceConfig = {

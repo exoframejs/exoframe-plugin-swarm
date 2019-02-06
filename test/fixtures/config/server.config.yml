@@ -1,0 +1,6 @@
+debug: true
+baseDomain: '.test'
+plugins:
+  install: ['exoframe-plugin-swarm']
+  swarm:
+    enabled: true
