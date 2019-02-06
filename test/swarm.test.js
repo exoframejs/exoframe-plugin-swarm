@@ -63,8 +63,8 @@ let composeDeployTwo = '';
 let htmlServiceInfo = {};
 let nodeServiceInfo = {};
 
-// set timeout to 60s
-jest.setTimeout(60000);
+// set timeout to 120s
+jest.setTimeout(120000);
 
 beforeAll(async done => {
   // remove any installed plugins
