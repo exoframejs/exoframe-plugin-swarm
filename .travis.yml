@@ -16,3 +16,12 @@ before_install:
 
 after_success:
   - yarn coveralls
+
+deploy:
+  provider: npm
+  email: yamalight@gmail.com
+  api_key:
+    secure: NI+Gp/lHsXSJ0Z5cPiVtNfxf9QtYbOdPqDxRf2aycFfZnpn8b0vc5btRbYVSnFF3Hh+BZv4q0mXVDqcFm8El0IRGReQb9PVh7lqM9xoMeQr1p8E0AtV/7ZOjZRBhIgRDSkJtP6i7ls++dPQlIXcC2FV6dzy7+t2kTL2UuVQ/JzAGwiAJTk10xIcllLUF0+EVtuMwTUcV+SVotr4hUkHXRyPdJLNzlwgmmMI1p6VSKTNr5c8Y+x0xTdSA4OyL0I1uids1hx5Z3t+kgPO/875W6DRg7BusjFoBtNmvCt1oBtF9o5PvhsCeQE1ZUXVBxkXb9nzYWBTsdVGsCM12iS0UX6+JErwzyz168+SVXy3UZNFQnJNa+6ZwBRWsluf9J5wZJF1CmUBiCBsfoKVQWHW6sTD5HFtoJ0R6+pcbtqcCzG4MQuZyz+PgskPNMOgHGa7Tl/ZaTh+HBLK5dneo6rhXe85gwRqfRm9zUqF+gpu1a4SURSRJWzy5FqhuIiLcXSJF6bJzqc1jzXO/NTozIpXymhvfhc5Yip365olUysUe2Ltc9R0lMEX9TzdUHmSYEtuOAyNPiEMiek7PRYwR8wqCzYUEBVstLcvenkOGfubuJoFu3f+Nec7mHbfeMTKLx8jKuoqNR9rhXqAQNROWtOpE9e7NKrS42BeMYaV55Yig69w=
+  on:
+    tags: true
+    repo: exoframejs/exoframe-plugin-swarm
